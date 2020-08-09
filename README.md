@@ -42,3 +42,14 @@ RESTRICTED_PERMISSIONS={Permissions integer of permissions bot will not assign t
 ~~~
 
 After that, you should be able to just run the main python script.
+
+### Contribution
+
+If you wish to add commands to the bot, look at basic_cog.py for a bare-bones simple example of what a cognition looks like.
+Please group your commands by cognition.
+All cogs must go in the cogs folder, and end in _cog.py
+We generally follow the guidlines of PEP 8 for formatting and naming
+Prefer f-strings for formatted string duties
+Checking in directly into master is not permitted; you will need to create a branch, and then publish the branch to GitHub, and then create a pull request for your changes.
+
+Bot redeploys on an irregular schedule

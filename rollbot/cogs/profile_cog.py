@@ -7,8 +7,9 @@ import re
 
 class ProfileCog(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot, db):
         self.bot = bot
+        self.db = db
 
     def getBot(self):
         return self.bot
@@ -36,14 +37,18 @@ class ProfileCog(commands.Cog):
     async def getProfile(self, ctx, profile_name: str):
         """Get a Profile link from the Database"""
         try:
-            # Get the ProfileName from the database
-            # If its None, then we cannae do it
-            # If it's not None, but one, show single
-            # If it's not None, but multiple, show multiple
-            profile_link = 'Mock'
-            return await ctx.send(f'** {profile_name}: "{profile_link}", it must be a Discord URL')
+            results = self.db.find_one(profile_name)
+            if (len(results) == 0):
+                return await ctx.send(f'** Could not find a profile for {profile_name}')
+            elif (len(results) == 1):
+                return await ctx.send(f'** {profile_name}: {results[0]["Link"]}')
+            else:
+                to_return = []
+                for x in results:
+                    to_return.append(f'** {profile_name}({x["Owner"]}): {x["Link"]}')
+                return await ctx.send('\n'.join(to_return))
         except Exception as ex:
-            await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+            return await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
 
     @commands.command(name='del_profile', hidden=True)
     @commands.is_owner()
@@ -51,11 +56,23 @@ class ProfileCog(commands.Cog):
         """Delete a Profile link from the Database"""
         try:
             member = ctx.author
+            results = self.db.find_one(profile_name)
+            if (len(results) == 0):
+                return await ctx.send(f'** Could not find a profile for {profile_name}')
+            deleted_count = 0
+            for x in results:   
+                if (x['Owner'] == member):
+                    deleted_count += 1
+                    self.db.delete_one(owner = member, name = profile_name)
             
-            # Get the ProfileName from the database, owned by member
-            # If its None, then we cannae do it
-            # If it is not None, then we can delete it
-            return await ctx.send(f'** Deleted {profile_name} for you')
+
+            if (deleted_count == 0):
+                return await ctx.send(f'** You do not own {profile_name}({results[0]["Owner"]})')
+            elif (len(results) == 1):
+                return await ctx.send(f'** Deleted {profile_name}')
+            else:
+                return await ctx.send(f'** Deleted {profile_name}({member})')
+        
         except Exception as ex:
             await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
 

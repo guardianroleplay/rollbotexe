@@ -23,11 +23,42 @@ class ProfileCog(commands.Cog):
                 re.IGNORECASE
             )
             if (re.match(regex, profile_link) is not None):
+                member = ctx.author
+                # Do the save thing
                 return await ctx.send(f'** Added "{profile_name}" profile at "{profile_link}"')
             else:
                 return await ctx.send(f'** Couldn\'t add the profile "{profile_link}", it must be a Discord URL')
         except Exception as ex:
             await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+
+    @commands.command(name='get_profile', hidden=True)
+    @commands.is_owner()
+    async def getProfile(self, ctx, profile_name: str):
+        """Get a Profile link from the Database"""
+        try:
+            # Get the ProfileName from the database
+            # If its None, then we cannae do it
+            # If it's not None, but one, show single
+            # If it's not None, but multiple, show multiple
+            profile_link = 'Mock'
+            return await ctx.send(f'** {profile_name}: "{profile_link}", it must be a Discord URL')
+        except Exception as ex:
+            await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+
+    @commands.command(name='del_profile', hidden=True)
+    @commands.is_owner()
+    async def delProfile(self, ctx, profile_name: str):
+        """Delete a Profile link from the Database"""
+        try:
+            member = ctx.author
+            
+            # Get the ProfileName from the database, owned by member
+            # If its None, then we cannae do it
+            # If it is not None, then we can delete it
+            return await ctx.send(f'** Deleted {profile_name} for you')
+        except Exception as ex:
+            await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+
 
     @commands.command(name='help_profile', hidden=True)
     @commands.is_owner()

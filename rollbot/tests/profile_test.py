@@ -124,3 +124,6 @@ async def test_profile_del():
 
     del_result = await profile.delProfile(profile, disc, 'Moe')
     assert del_result == '** Deleted Moe'
+
+    del_result = await profile.delProfile(profile, disc, 'Larry')
+    assert del_result == '** You do not own Larry(Owner#2)'

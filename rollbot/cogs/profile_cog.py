@@ -3,6 +3,7 @@
 from discord.ext import commands
 import discord
 import re
+import sqlite3
 
 
 class ProfileCog(commands.Cog):
@@ -26,7 +27,20 @@ class ProfileCog(commands.Cog):
             if (re.match(regex, profile_link) is not None):
                 member = ctx.author
                 # Do the save thing
-                return await ctx.send(f'** Added "{profile_name}" profile at "{profile_link}"')
+                exist_count = self.db.execute(
+                    'SELECT LINK FROM PROFILES WHERE OWNER = ? AND PROFILE = ?',
+                    (member, profile_name)
+                )
+                row = exist_count.fetchone()
+                if (row == None):
+                    cursor = self.db.cursor()
+                    cursor.execute(
+                        "INSERT INTO PROFILES (OWNER, PROFILE, LINK) VALUES (?,?,?)",
+                        (member, profile_name, profile_link)
+                    )
+                    self.db.commit()
+                    return await ctx.send(f'** Added "{profile_name}" profile at "{profile_link}"')
+                return await ctx.send(f'** Couldn\'t add the profile "{profile_name}", you have already got that profile as {row[0]}')
             else:
                 return await ctx.send(f'** Couldn\'t add the profile "{profile_link}", it must be a Discord URL')
         except Exception as ex:
@@ -37,15 +51,18 @@ class ProfileCog(commands.Cog):
     async def getProfile(self, ctx, profile_name: str):
         """Get a Profile link from the Database"""
         try:
-            results = self.db.find_one(profile_name)
-            if (len(results) == 0):
+            results = self.db.execute(
+                'SELECT OWNER, LINK FROM PROFILES WHERE PROFILE = ?',
+                (profile_name,)
+            )
+            to_return = []
+            for row in results:
+                to_return.append(f'** {profile_name}({row[0]}): {row[1]}')
+            if (len(to_return) == 0):
                 return await ctx.send(f'** Could not find a profile for {profile_name}')
-            elif (len(results) == 1):
-                return await ctx.send(f'** {profile_name}: {results[0]["Link"]}')
+            elif (len(to_return) == 1):
+                return await ctx.send(f'** {profile_name}: {row[1]}')
             else:
-                to_return = []
-                for x in results:
-                    to_return.append(f'** {profile_name}({x["Owner"]}): {x["Link"]}')
                 return await ctx.send('\n'.join(to_return))
         except Exception as ex:
             return await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
@@ -56,26 +73,39 @@ class ProfileCog(commands.Cog):
         """Delete a Profile link from the Database"""
         try:
             member = ctx.author
-            results = self.db.find_one(profile_name)
-            if (len(results) == 0):
-                return await ctx.send(f'** Could not find a profile for {profile_name}')
-            deleted_count = 0
-            for x in results:   
-                if (x['Owner'] == member):
-                    deleted_count += 1
-                    self.db.delete_one(owner = member, name = profile_name)
-            
+            results = self.db.execute(
+                'SELECT ID, OWNER, LINK FROM PROFILES WHERE PROFILE = ?',
+                (profile_name,)
+            )
+            delete_count = 0
+            process_count = 0
+            owners = []
+            for row in results:
+                process_count += 1
+                if (row[1] == member):
+                    cursor = self.db.cursor()
+                    cursor.execute(
+                        "DELETE FROM PROFILES WHERE ID = ?",
+                        (row[0],)
+                    )
+                    self.db.commit()
+                    delete_count += 1
+                else:
+                    owners.append(row[1])
 
-            if (deleted_count == 0):
-                return await ctx.send(f'** You do not own {profile_name}({results[0]["Owner"]})')
-            elif (len(results) == 1):
-                return await ctx.send(f'** Deleted {profile_name}')
-            else:
+            if (process_count == 0):
+                return await ctx.send(f'** Could not find a profile for {profile_name}')
+            elif (delete_count == 0):
+                owners_string = ','.join(owners)
+                return await ctx.send(f'** You do not own {profile_name}({owners_string})')
+            elif (process_count > 1):
                 return await ctx.send(f'** Deleted {profile_name}({member})')
-        
+            else:
+                return await ctx.send(f'** Deleted {profile_name}')
+                
+
         except Exception as ex:
             await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
-
 
     @commands.command(name='help_profile', hidden=True)
     @commands.is_owner()
@@ -87,6 +117,6 @@ class ProfileCog(commands.Cog):
             await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
 
 
-# Add me 
+# Add me
 def setup(bot):
     bot.add_cog(ProfileCog(bot))

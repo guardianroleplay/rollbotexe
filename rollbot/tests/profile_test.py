@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+import sqlite3
 
 from rollbot.cogs.profile_cog import ProfileCog
 from unittest.mock import patch, ANY
@@ -21,56 +22,19 @@ class MockDiscord():
 disc = MockDiscord()
 
 # SQL MOCK
-class MockDatabase():
-    def __init__(self):
-        self.profiles = [
-            {
-                'Owner': 'Sethur#234',
-                'Profile': 'Sethur',
-                'Link': 'https://discordapp.com/Seth'
-            }, {
-                'Owner': 'Owner#1',
-                'Profile': 'MultipleMan',
-                'Link': 'https://xxx'
-            }, {
-                'Owner': 'Owner#2',
-                'Profile': 'MultipleMan',
-                'Link': 'https://xxx'
-            }, {
-                'Owner': 'Owner#2',
-                'Profile': 'Curly',
-                'Link': 'https://xxx'
-            }, {
-                'Owner': 'Owner#1',
-                'Profile': 'Larry',
-                'Link': 'https://xxx'
-            }, {
-                'Owner': 'Owner#2',
-                'Profile': 'Larry',
-                'Link': 'https://xxx'
-            }, {
-                'Owner': 'Owner#1',
-                'Profile': 'Moe',
-                'Link': 'https://xxx'
-            }
-        ]
-
-    def insert_one(self, x: dict):
-        self.profiles.append(x)
-
-    def delete_one(self, owner: str, name:str):
-        for idx, val in enumerate(self.profiles):
-            if (val['Owner'] == owner and val['Profile'] == name):
-                self.profiles.pop(idx)
-
-    def find_one(self, name: str):
-        to_return = []
-        for x in self.profiles:
-            if (x['Profile'] == name):
-                to_return.append(x)
-        return to_return
-
-db = MockDatabase()
+db = sqlite3.connect(':memory:')
+db.execute('''CREATE TABLE PROFILES
+         (ID      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+         OWNER    CHAR(50)                          NOT NULL,
+         PROFILE  CHAR(50)                          NOT NULL,
+         LINK     CHAR(255)                         NOT NULL);''')
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (1, 'Sethur#234', 'Sethur', 'https://discordapp.com/Seth')")
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (2, 'Owner#1', 'MultipleMan', 'https://xxx')")
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (3, 'Owner#2', 'MultipleMan', 'https://xxx')")
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (4, 'Owner#2', 'Curly', 'https://xxx')")
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (5, 'Owner#1', 'Larry', 'https://xxx')")
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (6, 'Owner#2', 'Larry', 'https://xxx')")
+db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (7, 'Owner#1', 'Moe', 'https://xxx')")
 
 def test_bot():
     profile = ProfileCog(None, db)
@@ -93,6 +57,9 @@ async def test_profile_add():
 
     add_result = await profile.addProfile(profile, disc, 'Relapse', 'https://discordapp.com/channels/735710358333030460/735881650311004160/742695586133966898')
     assert add_result == '** Added "Relapse" profile at "https://discordapp.com/channels/735710358333030460/735881650311004160/742695586133966898"'
+
+    add_result = await profile.addProfile(profile, disc, 'Relapse', 'https://discordapp.com/channels/735710358333030461/735881650311004160/742695586133966891')
+    assert add_result == '** Couldn\'t add the profile "Relapse", you have already got that profile as https://discordapp.com/channels/735710358333030460/735881650311004160/742695586133966898'
 
 
 @pytest.mark.asyncio

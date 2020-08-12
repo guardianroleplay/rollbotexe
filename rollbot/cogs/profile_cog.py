@@ -9,10 +9,9 @@ from rollbot.profile.profile import Profile
 
 class ProfileCog(commands.Cog):
 
-    def __init__(self, bot, db):
+    def __init__(self, bot, profile):
         self.bot = bot
-        self.db = db
-        self.profile = Profile(db)
+        self.profile = profile
 
     async def getBot(self):
         return self.bot

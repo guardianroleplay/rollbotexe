@@ -6,6 +6,7 @@ import aiosqlite
 from unittest.mock import patch, ANY
 from pymongo import MongoClient
 from rollbot.cogs.profile_cog import ProfileCog
+from rollbot.profile.profile import Profile
 
 # DISCORD MOCK
 
@@ -43,7 +44,7 @@ async def create_database(db):
 async def test_bot():
     db = await aiosqlite.connect(':memory:')
     db = await create_database(db)
-    profile = ProfileCog(None, db)
+    profile = ProfileCog(None, Profile(db))
     result = await profile.getBot()
     assert None == result
     await db.close()
@@ -52,7 +53,7 @@ async def test_bot():
 async def test_profile_help():
     db = await aiosqlite.connect(':memory:')
     db = await create_database(db)
-    profile = ProfileCog(None, db)
+    profile = ProfileCog(None, Profile(db))
     returned_post = await profile.helpProfile(profile, ctx = disc)
     assert returned_post == '** add_profile <name> <link> to add a link to a profile\n** del_profile <name> to remove the link to a profile\n**profile <name> to find a profile by name\n** To get the link to your profile, hover over the post, click the ... and Copy MessageLink'
     await db.close()
@@ -62,7 +63,7 @@ async def test_profile_help():
 async def test_profile_add():
     db = await aiosqlite.connect(':memory:')
     db = await create_database(db)
-    profile = ProfileCog(None, db)
+    profile = ProfileCog(None, Profile(db))
 
     add_result = await profile.addProfile(profile, disc, 'Relapse', 'https://google.com/channels/735710358333030460/735881650311004160/742695586133966898')
     assert add_result == '** Couldn\'t add the profile "https://google.com/channels/735710358333030460/735881650311004160/742695586133966898", it must be a Discord URL'
@@ -79,7 +80,7 @@ async def test_profile_add():
 async def test_profile_get():
     db = await aiosqlite.connect(':memory:')
     db = await create_database(db)
-    profile = ProfileCog(None, db)
+    profile = ProfileCog(None, Profile(db))
 
     get_result = await profile.getProfile(profile, disc, 'Sethur')
     assert get_result == '** Sethur: https://discordapp.com/Seth'
@@ -96,7 +97,7 @@ async def test_profile_get():
 async def test_profile_del():
     db = await aiosqlite.connect(':memory:')
     db = await create_database(db)
-    profile = ProfileCog(None, db)
+    profile = ProfileCog(None, Profile(db))
 
     del_result = await profile.delProfile(profile, disc, 'Zeppo')
     assert del_result == '** Could not find a profile for Zeppo'

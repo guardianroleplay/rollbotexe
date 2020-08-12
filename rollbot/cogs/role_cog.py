@@ -47,25 +47,19 @@ class RoleCog(commands.Cog):
       return
 
     if role in member.roles:
-      try:
-        await member.remove_roles(role)
-        await ctx.send(f'Removed {role.name} from {member.display_name}')
-      except Exception as ex:
-        await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+      await member.remove_roles(role)
+      await ctx.send(f'Removed {role.name} from {member.display_name}')
     else:
-      try:
-        await member.add_roles(role)
-        await ctx.send(f'Added {role.name} to {member.display_name}')
-      except Exception as ex:
-        await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+      await member.add_roles(role)
+      await ctx.send(f'Added {role.name} to {member.display_name}')
 
   @commands.command()
   async def role_list(self, ctx, *, debug: str = ''):
-    """Get a list of all the roles available on the server. !role_list debug to also get Role IDs"""
+    """Get a list of all the roles available on the server."""
     roles = await ctx.guild.fetch_roles()
 
     role_list = 'Roles:'
-    if debug == 'debug':
+    if self.bot.debug:
       for role in (role for role in roles if not role.is_default()):
         role_list += f'\n {role.name} - {role.id}'
     else:

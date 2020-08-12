@@ -41,6 +41,7 @@ class ProfileCog(commands.Cog):
                         (member, profile_name, profile_link)
                     )
                     await self.db.commit()
+                    await cursor.close()
                     return await ctx.send(f'** Added "{profile_name}" profile at "{profile_link}"')
                 return await ctx.send(f'** Couldn\'t add the profile "{profile_name}", you have already got that profile as {row[0]}')
             else:
@@ -95,6 +96,7 @@ class ProfileCog(commands.Cog):
                 else:
                     owners.append(row[1])
 
+            await results.close()
             if (process_count == 0):
                 return await ctx.send(f'** Could not find a profile for {profile_name}')
             elif (delete_count == 0):

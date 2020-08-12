@@ -4,6 +4,7 @@ from discord.ext import commands
 import discord
 import re
 import sqlite3
+import aiosqlite
 
 
 class ProfileCog(commands.Cog):
@@ -12,7 +13,7 @@ class ProfileCog(commands.Cog):
         self.bot = bot
         self.db = db
 
-    def getBot(self):
+    async def getBot(self):
         return self.bot
 
     @commands.command(name='add_profile', hidden=True)
@@ -24,39 +25,40 @@ class ProfileCog(commands.Cog):
                 r'^https://discordapp.com/channels/\d{18}/\d{18}/\d{18}',
                 re.IGNORECASE
             )
+
             if (re.match(regex, profile_link) is not None):
                 member = ctx.author
                 # Do the save thing
-                exist_count = self.db.execute(
+                exist_count = await self.db.execute(
                     'SELECT LINK FROM PROFILES WHERE OWNER = ? AND PROFILE = ?',
                     (member, profile_name)
                 )
-                row = exist_count.fetchone()
+                row = await exist_count.fetchone()
                 if (row == None):
-                    cursor = self.db.cursor()
-                    cursor.execute(
+                    cursor = await self.db.cursor()
+                    await cursor.execute(
                         "INSERT INTO PROFILES (OWNER, PROFILE, LINK) VALUES (?,?,?)",
                         (member, profile_name, profile_link)
                     )
-                    self.db.commit()
+                    await self.db.commit()
                     return await ctx.send(f'** Added "{profile_name}" profile at "{profile_link}"')
                 return await ctx.send(f'** Couldn\'t add the profile "{profile_name}", you have already got that profile as {row[0]}')
             else:
                 return await ctx.send(f'** Couldn\'t add the profile "{profile_link}", it must be a Discord URL')
         except Exception as ex:
-            await ctx.send(f'**`ERR:`** {type(ex).__name__} - {ex}')
+            return await ctx.send(f'{ex}')
 
     @commands.command(name='get_profile', hidden=True)
     @commands.is_owner()
     async def getProfile(self, ctx, profile_name: str):
         """Get a Profile link from the Database"""
         try:
-            results = self.db.execute(
+            results = await self.db.execute(
                 'SELECT OWNER, LINK FROM PROFILES WHERE PROFILE = ?',
                 (profile_name,)
             )
             to_return = []
-            for row in results:
+            async for row in results:
                 to_return.append(f'** {profile_name}({row[0]}): {row[1]}')
             if (len(to_return) == 0):
                 return await ctx.send(f'** Could not find a profile for {profile_name}')
@@ -73,22 +75,22 @@ class ProfileCog(commands.Cog):
         """Delete a Profile link from the Database"""
         try:
             member = ctx.author
-            results = self.db.execute(
+            results = await self.db.execute(
                 'SELECT ID, OWNER, LINK FROM PROFILES WHERE PROFILE = ?',
                 (profile_name,)
             )
             delete_count = 0
             process_count = 0
             owners = []
-            for row in results:
+            async for row in results:
                 process_count += 1
                 if (row[1] == member):
-                    cursor = self.db.cursor()
-                    cursor.execute(
+                    cursor = await self.db.cursor()
+                    await cursor.execute(
                         "DELETE FROM PROFILES WHERE ID = ?",
                         (row[0],)
                     )
-                    self.db.commit()
+                    await self.db.commit()
                     delete_count += 1
                 else:
                     owners.append(row[1])

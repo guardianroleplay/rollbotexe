@@ -1,11 +1,11 @@
 import pytest
 import asyncio
 import sqlite3
+import aiosqlite
 
-from rollbot.cogs.profile_cog import ProfileCog
 from unittest.mock import patch, ANY
-from rollbot.rollbot import RollBot
 from pymongo import MongoClient
+from rollbot.cogs.profile_cog import ProfileCog
 
 # DISCORD MOCK
 
@@ -22,34 +22,45 @@ class MockDiscord():
 disc = MockDiscord()
 
 # SQL MOCK
-db = sqlite3.connect(':memory:')
-db.execute('''CREATE TABLE PROFILES
-         (ID      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-         OWNER    CHAR(50)                          NOT NULL,
-         PROFILE  CHAR(50)                          NOT NULL,
-         LINK     CHAR(255)                         NOT NULL);''')
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (1, 'Sethur#234', 'Sethur', 'https://discordapp.com/Seth')")
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (2, 'Owner#1', 'MultipleMan', 'https://xxx')")
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (3, 'Owner#2', 'MultipleMan', 'https://xxx')")
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (4, 'Owner#2', 'Curly', 'https://xxx')")
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (5, 'Owner#1', 'Larry', 'https://xxx')")
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (6, 'Owner#2', 'Larry', 'https://xxx')")
-db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (7, 'Owner#1', 'Moe', 'https://xxx')")
+async def create_database(db):
+    await db.execute('''CREATE TABLE PROFILES
+            (ID      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            OWNER    CHAR(50)                          NOT NULL,
+            PROFILE  CHAR(50)                          NOT NULL,
+            LINK     CHAR(255)                         NOT NULL);''')
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (1, 'Sethur#234', 'Sethur', 'https://discordapp.com/Seth')")
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (2, 'Owner#1', 'MultipleMan', 'https://xxx')")
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (3, 'Owner#2', 'MultipleMan', 'https://xxx')")
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (4, 'Owner#2', 'Curly', 'https://xxx')")
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (5, 'Owner#1', 'Larry', 'https://xxx')")
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (6, 'Owner#2', 'Larry', 'https://xxx')")
+    await db.execute("INSERT INTO PROFILES (ID,OWNER,PROFILE,LINK) VALUES (7, 'Owner#1', 'Moe', 'https://xxx')")
+    await db.commit()
+    return db
 
-def test_bot():
+# python -m pytest rollbot\tests\profile_test.py
+@pytest.mark.asyncio
+async def test_bot():
+    db = await aiosqlite.connect(':memory:')
+    db = await create_database(db)
     profile = ProfileCog(None, db)
-    assert None == profile.getBot()
+    result = await profile.getBot()
+    assert None == result
 
 
 @pytest.mark.asyncio
 async def test_profile_help():
+    db = await aiosqlite.connect(':memory:')
+    db = await create_database(db)
     profile = ProfileCog(None, db)
-    returned_post = await profile.helpProfile(profile, disc)
+    returned_post = await profile.helpProfile(profile, ctx = disc)
     assert returned_post == '** add_profile <name> <link> to add a link to a profile\n** del_profile <name> to remove the link to a profile\n**profile <name> to find a profile by name\n** To get the link to your profile, hover over the post, click the ... and Copy MessageLink'
 
 
 @pytest.mark.asyncio
 async def test_profile_add():
+    db = await aiosqlite.connect(':memory:')
+    db = await create_database(db)
     profile = ProfileCog(None, db)
 
     add_result = await profile.addProfile(profile, disc, 'Relapse', 'https://google.com/channels/735710358333030460/735881650311004160/742695586133966898')
@@ -64,6 +75,8 @@ async def test_profile_add():
 
 @pytest.mark.asyncio
 async def test_profile_get():
+    db = await aiosqlite.connect(':memory:')
+    db = await create_database(db)
     profile = ProfileCog(None, db)
 
     get_result = await profile.getProfile(profile, disc, 'Sethur')
@@ -78,6 +91,8 @@ async def test_profile_get():
 
 @pytest.mark.asyncio
 async def test_profile_del():
+    db = await aiosqlite.connect(':memory:')
+    db = await create_database(db)
     profile = ProfileCog(None, db)
 
     del_result = await profile.delProfile(profile, disc, 'Zeppo')

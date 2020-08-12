@@ -12,7 +12,8 @@ class RollBot(commands.Bot):
     self.cogs_directory = kwargs.pop('cogs_directory', '')
     self.restricted_permissions = kwargs.pop('restricted_permissions', 0)
     self.cogs_dot_directory = self.cogs_directory.replace('/', '.')
-    
+
+    self.debug = False    
     # load and instantiate any cogs we have
     for filename in os.listdir(self.cogs_directory):
       if filename.endswith('_cog.py'):
@@ -47,7 +48,7 @@ class RollBot(commands.Bot):
     if kwargs:
       raise TypeError(f'Unexpected keyword argument(s) {list(kwargs.keys())}')
 
-    await self.login(*args, bot=bot)
+    await self.login(args[0], bot=bot)
     await self.connect(reconnect=reconnect)
 
   async def on_ready(self):
@@ -70,7 +71,11 @@ class RollBot(commands.Bot):
     """
     if isinstance(err, commands.CommandNotFound):
       await ctx.send('Command not recognised')
-    if isinstance(err, commands.NotOwner):
-      print(f'{ctx.message.author} attempted to use an owner command')
+    elif isinstance(err, commands.NotOwner):
+      print(f'{ctx.message.author}-{ctx.message.author.id} attempted to use an owner command')
+      await ctx.send('Unauthorized')
     else:
-      raise err
+      if self.debug:
+        await ctx.send(f'**`ERR:`** {type(err).__name__} - {err}')
+      else:
+        await ctx.send(f'Something went wrong processing your command.')

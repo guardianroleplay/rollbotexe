@@ -16,6 +16,7 @@ class BasicCog(commands.Cog):
   @commands.command()
   async def hello(self, ctx, *, member: discord.Member = None):
     """Greets the user"""
+    # pylint: disable=anomalous-backslash-in-string
     await ctx.send(f'Hi there \o^_^o/')
 
 def setup(bot):

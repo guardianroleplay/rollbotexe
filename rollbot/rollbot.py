@@ -3,6 +3,7 @@ import discord
 import os
 
 from discord.ext import commands
+from rollbot.profile.profile import Profile
 
 class RollBot(commands.Bot):
   def __init__(self, *args, **kwargs):
@@ -12,6 +13,8 @@ class RollBot(commands.Bot):
     self.cogs_directory = kwargs.pop('cogs_directory', '')
     self.restricted_permissions = kwargs.pop('restricted_permissions', 0)
     self.cogs_dot_directory = self.cogs_directory.replace('/', '.')
+    self.table_suffix = kwargs.pop('table_suffix', '')
+    self.profile = kwargs.pop('profile', [])
 
     self.debug = False    
     # load and instantiate any cogs we have

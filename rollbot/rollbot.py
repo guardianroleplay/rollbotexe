@@ -12,6 +12,8 @@ class RollBot(commands.Bot):
     self.cogs_directory = kwargs.pop('cogs_directory', '')
     self.restricted_permissions = kwargs.pop('restricted_permissions', 0)
     self.cogs_dot_directory = self.cogs_directory.replace('/', '.')
+    self.table_suffixes = kwargs.pop('table_suffixes', [])
+    self.sqlite_connection = kwargs.pop('sqlite_connection', '')
 
     self.debug = False    
     # load and instantiate any cogs we have

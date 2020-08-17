@@ -39,7 +39,7 @@ You will need to make an new file named .env in the same directory as main.py. T
 DISCORD_TOKEN={token string from Discord OAuth}
 DISCORD_GUILDS={Comma-seperated list of servers the bot will pay attention to}
 RESTRICTED_PERMISSIONS={Permissions integer of permissions bot will not assign to people; can be generated at Discord's developer portal}
-TABLE_SUFFIX = {Maps the Guild by ID to a table name suffix for different bots running in the same database}
+TABLE_SUFFIX = {JSON object mapping the Guild by ID (int) to a table name suffix (str) for different bots running in the same database}
 SQLITE_CONNECTION = {String to pass to the sqlite connector, detailing the path to the database file}
 ~~~
 

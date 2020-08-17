@@ -3,36 +3,23 @@
 import re
 import sqlite3
 import aiosqlite
-import rollbot.profile.profile
 
 
 class Profile():
-    def __init__(self, db_name: str, table_suffix: str):
+    def __init__(self, db_name: str):
         self.db_name = db_name
-        self.table = f'PROFILES{table_suffix}'
-        self.create_db()
 
-    def create_db(self):
-        try:
-            with sqlite3.connect(self.db_name) as db:
-                db.execute(f'''CREATE TABLE {self.table}
-                    (ID      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                    OWNER    CHAR(50)                          ,
-                    OWNER_ID INTEGER                           NOT NULL,
-                    PROFILE  CHAR(50)                          NOT NULL,
-                    LINK     CHAR(255)                         NOT NULL);''')
-        except Exception as ex:
-            return True
-
+    def set_table_suffix(self, table: str):
+        self.table = f'PROFILE{table}'
 
     async def add_profile(self, member: str, member_id: int, profile_name: str, profile_link: str):
+        # Do the save thing
         regex = re.compile(
-            r'^https://discordapp.com/channels/\d{18}/\d{18}/\d{18}',
+            r'^https://',
             re.IGNORECASE
         )
 
         if (re.match(regex, profile_link) is not None):
-            # Do the save thing
             async with aiosqlite.connect(self.db_name) as db:
                 exist_count = await db.execute(
                     f'SELECT LINK FROM {self.table} WHERE OWNER_ID = ? AND PROFILE = ?',
@@ -49,7 +36,7 @@ class Profile():
                     return f'** Added "{profile_name}" profile at "{profile_link}"'
             return f'** Couldn\'t add the profile "{profile_name}", you have already got that profile as {row[0]}'
         else:
-            return f'** Couldn\'t add the profile "{profile_link}", it must be a Discord URL'
+            return f'** Couldn\'t add the profile "{profile_link}", it must be a URL'
 
     async def get_profile(self, profile_name: str):
         async with aiosqlite.connect(self.db_name) as db:

@@ -10,7 +10,7 @@ class Profile():
         self.db_name = db_name
 
     def set_table_suffix(self, table: str):
-        self.table = f'PROFILE{table}'
+        self.table = f'profile_{table}'
 
     async def add_profile(self, member: str, member_id: int, profile_name: str, profile_link: str):
         # Do the save thing

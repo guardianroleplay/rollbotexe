@@ -55,5 +55,18 @@ class DevCog(commands.Cog):
     server_to_leave = self.bot.get_guild(int(server_id, 10))
     await server_to_leave.leave()
 
+  @commands.command(name='user_list', hidden=True)
+  @commands.is_owner()
+  async def dev_user_list(self, ctx):
+    """Get a list of users. If debug mode is on, also show their IDs"""
+    users = "Users on this server:"
+    if self.bot.debug:
+      for user in ctx.guild.members:
+        users += f'\n{user.name} - {user.id}'
+    else:
+      for user in ctx.guild.members:
+        users += f'\n{user.name}'
+    await ctx.send(users)
+
 def setup(bot):
   bot.add_cog(DevCog(bot))
